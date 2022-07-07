@@ -23,7 +23,10 @@ def get_curriculum_data():
                logs.path,
                logs.user_id,
                logs.ip,
-               cohorts.name
+               cohorts.name,
+               cohorts.start_date,
+               cohorts.end_date,
+               cohorts.program_id
             FROM
                 logs
             LEFT JOIN
