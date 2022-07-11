@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from env import get_db_url
 
-def get_curriculum_data():
+def get_access_data():
     '''
     Acquires curriculum dataframe based on the SQL query found below
     Note: Checked against text file 'anonymized_curriculum_access.txt' and it's identical, so using the query instead
