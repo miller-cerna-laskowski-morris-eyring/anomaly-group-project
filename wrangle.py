@@ -12,7 +12,7 @@ from acquire import get_access_data
 
 def full_wrangle():
     '''
-    This combines all the wrangling sub-functions found below and is called without argument
+    This combines all the wrangling sub-functions found below and is called without an argument (pulls df from acquire)
     {Returns :  df (fully cleaned dataframe);
                 df_staff (dataframe where accessing cohort == 'Staff);
                 df_multicohort (dataframe of accesses for those listed in more than one cohort);
@@ -44,14 +44,23 @@ def full_wrangle():
     df = null_filler(df)
     df_final_cnt = df.shape[0]
 
-    print(f'''
-    This returned the following dataframes (reassign if you missed any):\n
-    > df = Fully cleaned dataframe, {df_final_cnt} records ({100*(df_final_cnt/df_raw_cnt):.3}% of raw dataframe)\n
-    > df_staff = Dataframe where accessing cohort == Staff, {df_staff_cnt} records ({100*(df_staff_cnt/df_raw_cnt):.3}% of raw dataframe)\n
-    > df_multicohort = Dataframe of accesses for users listed in more than one cohort, {df_multicohort_cnt} records ({100*(df_multicohort_cnt/df_raw_cnt):.3}% of raw dataframe)\n
-    > df_unimputed = Dataframe with accesses for those users whose cohorts were not known nor could not easily be imputed, {df_unimputed_cnt} records ({100*(df_unimputed_cnt/df_raw_cnt):.3}% of raw dataframe)\n
-    > df_non_curriculum = Dataframe for accessess not related to the curriculum, i.e. directories, images, {df_non_curriculum_cnt} records ({100*(df_non_curriculum_cnt/df_raw_cnt):.3}% of raw dataframe)\n
-    > df_outliers = Dataframe of accesses for those users meeting outlier conditions, {df_outliers_cnt} records ({100*(df_outliers_cnt/df_raw_cnt):.3}% of raw dataframe''')
+    ## To do - remake this into a dataframe
+    fcp = f'{100*(df_final_cnt/df_raw_cnt):.3}%'
+    dfs = f'{100*(df_staff_cnt/df_raw_cnt):.3}%'
+    dfm = f'{100*(df_multicohort_cnt/df_raw_cnt):.3}%'
+    dfu = f'{100*(df_unimputed_cnt/df_raw_cnt):.3}%'
+    dfn = f'{100*(df_non_curriculum_cnt/df_raw_cnt):.3}%'
+    dfo = f'{100*(df_outliers_cnt/df_raw_cnt):.3}%'
+
+    results = [{'Dataframe': 'df','Description':'Fully cleaned dataframe','Record Count':df_final_cnt,'Percent of Raw df':fcp},
+        {'Dataframe': 'df_staff','Description':'Dataframe where accessing cohort == Staff','Record Count':df_staff_cnt,'Percent of Raw df':dfs},
+        {'Dataframe': 'df_multicohort','Description':'Dataframe of accesses for users listed in more than one cohort','Record Count':df_multicohort_cnt,'Percent of Raw df':dfm},
+        {'Dataframe': 'df_unimputed','Description':'Dataframe with accesses for those users whose cohorts were not known nor could not easily be imputed','Record Count':df_unimputed_cnt,'Percent of Raw df':dfu},
+        {'Dataframe': 'df_non_curriculum','Description':'Dataframe for accessess not related to the curriculum, i.e. directories, images','Record Count':df_non_curriculum_cnt,'Percent of Raw df':dfn},
+        {'Dataframe': 'df_outliers','Description':'Dataframe of accesses for those users meeting outlier conditions','Record Count':df_outliers_cnt,'Percent of Raw df':dfo}]
+    
+    print('This returned the following dataframes (reassign if you missed any):')
+    print(pd.DataFrame(results).set_index('Dataframe'))
     
     return df, df_staff, df_multicohort, df_unimputed, df_non_curriculum, df_outliers
 
@@ -91,11 +100,10 @@ def add_and_set_columns(df):
 
 def split_path(df):
     '''
-    This splits the path into 'unit', 'subunit', 'lesson', and 'other.
-    The unit comes from the first element of the url path give
-    The lesson comes from the 2nd (if two elements only) or 3rd (if more than two elements) element of the url path
-    The rest is put into 'other'
-    [Returns df]
+    This splits the path into 'unit' and 'lesson': the latter is a combination of the first 1-3 elements in the path
+    The unit is the first element in the path.  If alone, it does not indicate a lesson has been selected.
+    The lesson comes from the 2nd (if two elements only) or 2nd and 3rd (if more than two elements) element of the url path
+    {Returns : df}
     '''
     # Creates a new dataframe to create the split data to merge into core df later
     splits = df.path.str.split('/', expand=True)
@@ -103,18 +111,9 @@ def split_path(df):
     splits['row_type'] = 8 - (splits.isnull().sum(axis=1))
     # Pulls out the academic unit, subunit and lesson
     splits['unit'] = splits[0]
-    splits['subunit'] = np.where(splits.row_type > 2, splits[1],splits[7])
-    splits['lesson'] = np.where(splits.row_type == 2, splits[1], splits[2])
-    # And finally, the rest of the path
-    splits['other'] = np.where(splits.row_type ==8,
-                            splits[3] + '/' + splits[4] + '/' + splits[5] + '/' + splits[6] + '/' + splits[7],
-                            np.where(splits.row_type == 7, 
-                                splits[3] + '/' + splits[4] + '/' + splits[5] + '/' + splits[6],
-                                np.where(splits.row_type == 6,
-                                            splits[3] + '/' + splits[4] + '/' + splits[5],
-                                            np.where(splits.row_type == 5,
-                                                    splits[3] + '/' + splits[4], splits[3]))))
-    splits = splits[['unit','subunit','lesson','other']]
+    splits['lesson'] = np.where(splits.row_type == 2, splits[0]+'.'+splits[1], np.where(splits.row_type == 3, splits[0]+'.'+splits[1]+'.'+splits[2], 'Not Lesson'))
+   
+    splits = splits[['unit','lesson']]
     df = df.merge(splits, left_index=True, right_index = True)
     return df
 
@@ -123,6 +122,9 @@ def remove_staff(df):
     Removes all entries with 'Staff' as cohort and puts them into seperate dataframe
     [Returns df and df_staff]
     '''
+    ##Final dataframe layout
+    df = df[['accessed','path', 'ip', 'user_id', 'program_id', 'program_type', 'cohort', 'start_date', 'end_date','lesson','hour']]
+
     df_staff = df[df.cohort == 'Staff']
     df_staff.start_date = pd.to_datetime(df.start_date)
     df_staff.end_date = pd.to_datetime(df.end_date)
@@ -210,9 +212,7 @@ def impute_cohorts(df):
     df = df.astype({'program_id':'float'})
 
     # Reorder columns to match previous dfs
-    df = df[['path', 'user_id', 'ip', 'cohort', 'start_date', 'end_date',
-       'program_id', 'program_type', 'accessed', 'hour', 'unit', 'subunit',
-       'lesson', 'other']]
+    df = df[['accessed','path', 'ip', 'user_id', 'program_id', 'program_type', 'cohort', 'start_date', 'end_date','lesson','hour']]
 
     # Creates multi-user dataframe
     multi_cohort_users = [25, 64, 88, 118, 120, 143, 268, 346, 419, 522, 663, 707, 752, 895]
@@ -223,9 +223,7 @@ def impute_cohorts(df):
     drop_index = drop_index.drop(multi_cohort_users)
     df = drop_index
     df = df.reset_index()
-    df = df[['path', 'user_id', 'ip', 'cohort', 'start_date', 'end_date',
-       'program_id', 'program_type', 'accessed', 'hour', 'unit', 'subunit',
-       'lesson', 'other']]
+    df = df[['accessed','path', 'ip', 'user_id', 'program_id', 'program_type', 'cohort', 'start_date', 'end_date','lesson','hour']]
 
     # Recalculate no cohort list
     no_cohort = df[df['cohort'].isnull()  == True]
@@ -240,9 +238,7 @@ def impute_cohorts(df):
     df = drop_index
     df = df.reset_index()
 
-    df = df[['path', 'user_id', 'ip', 'cohort', 'start_date', 'end_date',
-       'program_id', 'program_type', 'accessed', 'hour', 'unit', 'subunit',
-       'lesson', 'other']]
+    df = df[['accessed','path', 'ip', 'user_id', 'program_id', 'program_type', 'cohort', 'start_date', 'end_date','lesson','hour']]
 
     return df, df_multicohort, df_unimputed
 
