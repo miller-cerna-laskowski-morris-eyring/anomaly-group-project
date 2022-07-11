@@ -35,6 +35,8 @@ def initial_drops(df):
     df = df.drop(df.index[506305])
     # This program_id seemed to be in error
     df = df[df.program_id != 4]
+    # Also, we will change the column 'cohort' in 'cohort
+    df = df.rename(columns={'name':'cohort'})
     return df
 
 def split_path(df):
@@ -71,8 +73,8 @@ def remove_staff(df):
     Removes all entries with 'Staff' as cohort and puts them into seperate dataframe
     [Returns df and df_staff]
     '''
-    df_staff = df[df.name == 'Staff']
-    df = df[df.name != 'Staff']
+    df_staff = df[df.cohort == 'Staff']
+    df = df[df.cohort != 'Staff']
     return df, df_staff
 
 def impute_cohorts(df):
@@ -83,12 +85,12 @@ def impute_cohorts(df):
     and the second where the user's visit were partially recorded in a cohort, and partially as a Null
     '''
     # Create a dataframe of null nohorts
-    no_cohort = df[df['name'].isnull()  == True]
+    no_cohort = df[df['cohort'].isnull()  == True]
     no_cohort_list = no_cohort.user_id.unique()
     
     # Create a non-null dataframe (required for coming for loop)
     df_X = df.copy()
-    df_X['name'] = np.where(df_X.name.isnull() == True, 'X',df_X.name)
+    df_X['cohort'] = np.where(df_X.cohort.isnull() == True, 'X',df_X.cohort)
 
     # Will hold future dataframe object
     user_list = []
@@ -96,10 +98,10 @@ def impute_cohorts(df):
     #loop over each user without a cohort to find previous and next user cohorts
     for user in no_cohort_list:
         inlist = {}
-        inlist['prev_user_cohort'] = df_X[df_X.user_id == (user-1)].name.max()
+        inlist['prev_user_cohort'] = df_X[df_X.user_id == (user-1)].cohort.max()
         inlist['prev_user_program'] = df_X[df_X.user_id == (user-1)].program_id.max()
         inlist['user_id'] = user
-        inlist['next_user_cohort'] = df_X[df_X.user_id == (user+1)].name.max()
+        inlist['next_user_cohort'] = df_X[df_X.user_id == (user+1)].cohort.max()
         inlist['next_user_program'] = df_X[df_X.user_id == (user+1)].program_id.max()
         inlist['total_accesses'] = df_X[df_X.user_id == user].date.count()
         user_list.append(inlist)
@@ -112,18 +114,18 @@ def impute_cohorts(df):
     suggested_imputes = suggested_imputes[['suggested_cohort','prev_user_program']].rename(columns = {'prev_user_program':'program'})
 
     # This creates a dataframe with cohort info
-    sd = pd.DataFrame(df.groupby('name').start_date.min())
-    ed = pd.DataFrame(df.groupby('name').end_date.max())
-    pid = pd.DataFrame(df.groupby('name').program_id.mean())
-    cohort_info = sd.merge(ed, on='name').merge(pid, on='name')
+    sd = pd.DataFrame(df.groupby('cohort').start_date.min())
+    ed = pd.DataFrame(df.groupby('cohort').end_date.max())
+    pid = pd.DataFrame(df.groupby('cohort').program_id.mean())
+    cohort_info = sd.merge(ed, on='cohort').merge(pid, on='cohort')
 
     # Brings cohort info together with the suggested imputes
-    suggested_imputes = suggested_imputes.merge(cohort_info, left_on='suggested_cohort', right_on='name').set_index(suggested_imputes.index)
+    suggested_imputes = suggested_imputes.merge(cohort_info, left_on='suggested_cohort', right_on='cohort').set_index(suggested_imputes.index)
     suggested_imputes = suggested_imputes.drop(columns = 'program')
 
     # Merges with main dataframe and replaces the values of imputed rows
     df = df.merge(suggested_imputes, how='left', on='user_id')
-    df['name'] = np.where(df.name.isnull()==True, df.suggested_cohort, df.name)
+    df['cohort'] = np.where(df.cohort.isnull()==True, df.suggested_cohort, df.cohort)
     df['start_date'] = np.where(df.start_date_x.isnull()==True, df.start_date_y, df.start_date_x)
     df['end_date'] = np.where(df.end_date_x.isnull()==True, df.end_date_y, df.end_date_x)
     df['program_id'] = np.where(df.program_id_x.isnull()==True, df.program_id_y, df.program_id_x)
@@ -133,19 +135,19 @@ def impute_cohorts(df):
 
     # Imputes the three users with one set of Null and one set of identified cohorts
         # For 358
-    df['name'] = np.where(df.user_id == 358, 'Bayes', df.name)
+    df['cohort'] = np.where(df.user_id == 358, 'Bayes', df.cohort)
     df['start_date'] = np.where(df.user_id == 358, '2019-08-19', df.start_date)
     df['end_date'] = np.where(df.user_id == 358, '2020-01-30', df.end_date)
     df['program_id'] = np.where(df.user_id == 358, '3', df.program_id)
 
         # For 375
-    df['name'] = np.where(df.user_id == 375, 'Andromeda', df.name)
+    df['cohort'] = np.where(df.user_id == 375, 'Andromeda', df.cohort)
     df['start_date'] = np.where(df.user_id == 375, '2019-03-18', df.start_date)
     df['end_date'] = np.where(df.user_id == 375, '2019-07-30', df.end_date)
     df['program_id'] = np.where(df.user_id == 375, '2', df.program_id)
 
         # For 644
-    df['name'] = np.where(df.user_id == 644, 'Ganymede', df.name)
+    df['cohort'] = np.where(df.user_id == 644, 'Ganymede', df.cohort)
     df['start_date'] = np.where(df.user_id == 644, '2020-03-23', df.start_date)
     df['end_date'] = np.where(df.user_id == 644, '2020-08-20', df.end_date)
     df['program_id'] = np.where(df.user_id == 644, '2', df.program_id)
@@ -161,7 +163,7 @@ def impute_cohorts(df):
     df = df.reset_index()
 
     # Recalculate no cohort list
-    no_cohort = df[df['name'].isnull()  == True]
+    no_cohort = df[df['cohort'].isnull()  == True]
     no_cohort_list = no_cohort.user_id.unique()
 
     # Create dataframe for unimputed values
