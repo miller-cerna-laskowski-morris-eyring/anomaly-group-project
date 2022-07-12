@@ -8,7 +8,7 @@
 We are serving as Data Analysts for the CodeUp staff. We have been tasked by a staff member by email to answer several questions they need to speak on at an upcoming board meeting.
 
 Email:
-"I have some questions for you that I need to be answered before the board meeting Thursday afternoon. I need to be able to speak to the following questions. I also need a single slide that I can incorporate into my existing presentation (Google Slides) that summarizes the most important points. My questions are listed below; however, if you discover anything else important that I didn’t think to ask, please include that as well.
+"*I have some questions for you that I need to be answered before the board meeting Thursday afternoon. I need to be able to speak to the following questions. I also need a single slide that I can incorporate into my existing presentation (Google Slides) that summarizes the most important points. My questions are listed below; however, if you discover anything else important that I didn’t think to ask, please include that as well.
 
 1. Which lesson appears to attract the most traffic consistently across cohorts (per program)?
 2. Is there a cohort that referred to a lesson significantly more than other cohorts seemed to gloss over?
@@ -20,7 +20,7 @@ Email:
 8. Anything else I should be aware of?
 
 
-Thank you,
+Thank you,*
 "
 
 We will be using Anomaly Detection methodoligies to answer the questions. The data source is from the curriculum_logs MySql CodeUp database.
