@@ -5,7 +5,7 @@
 ### Project Summary / Scenario
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
 
-We are serving as Data Analysts for the CodeUp staff. We have been tasked by a staff member by email to answer several questions they need to speak on at an upcoming board meeting.
+We are serving as Data Analysts for the CodeUp staff. We have been tasked by a staff member to answer several questions in an email they need to speak on at an upcoming board meeting. We will be using Anomaly Detection methodoligies to answer the questions. The data source is from the curriculum_logs MySql CodeUp database.
 
 Email:
 
@@ -21,10 +21,7 @@ Email:
 8. *Anything else I should be aware of?*
 
 
-Thank you, *
-"
-
-We will be using Anomaly Detection methodoligies to answer the questions. The data source is from the curriculum_logs MySql CodeUp database.
+*Thank you,"*
 
 #### Project Objectives
 > - Answer all questions.
@@ -140,7 +137,8 @@ ___
 
 You will need all the necessary files listed below to run my final project notebook. 
 - [x] Read this README.md
-- [ ] Download [[heloer functions]]
+- [ ] Access to CodeUp MySql server
+- [ ] Download [[wrangle functions]]
 - [ ] Scrap notebooks
 - [ ] Run the final report
 
