@@ -1,9 +1,11 @@
-## AWESOME PROJECT ALERT! Update
+## CodeUp Curriculum Access Analysis
 
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
 
 ### Project Summary
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
+
+Scenario: We are serving as Data Analyst for CodeUp staff. We have been tasked by a Staff Member to answer 
 
 #### Project Objectives
 > - Obj 1 
