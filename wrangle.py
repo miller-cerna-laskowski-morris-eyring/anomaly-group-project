@@ -91,7 +91,8 @@ def add_and_set_columns(df):
 
     # Create program_type based on program_id
     data_science = df[df.program_id == 3.0].cohort.unique()
-    df['program_type'] = np.where(df.cohort.isin(data_science) == True, 'Data Science', 'Web Development')
+    web_dev = df[(df.program_id == 1.0) | (df.program_id == 2.0)].cohort.unique()
+    df['program_type'] = np.where(df.cohort.isin(data_science) == True, 'Data Science', np.where(df.cohort.isin(web_dev) == True, 'Web Development','Unknown'))
 
      # Create DateTime for future index, convert dates to DateTime, add an hour column, drop old date and time
     df['accessed'] = df['date'] + ' ' + df['time']
@@ -216,7 +217,8 @@ def impute_cohorts(df):
 
      # Ensure new program_type based on program_id
     data_science = df[df.program_id == 3.0].cohort.unique()
-    df['program_type'] = np.where(df.cohort.isin(data_science) == True, 'Data Science', 'Web Development')
+    web_dev = df[(df.program_id == 1.0) | (df.program_id == 2.0)].cohort.unique()
+    df['program_type'] = np.where(df.cohort.isin(data_science) == True, 'Data Science', np.where(df.cohort.isin(web_dev) == True, 'Web Development','Unknown'))
 
     # Reorder columns to match previous dfs
     df = df[['accessed','path', 'ip', 'user_id', 'program_id', 'program_type', 'cohort', 'start_date', 'end_date','lesson','hour']]
