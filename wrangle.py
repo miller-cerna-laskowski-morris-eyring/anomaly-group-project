@@ -1,5 +1,5 @@
 '''
-This library consists of a number of functions that colelctively turn the SQL query into a working dataframe
+This library consists of the functions which turn the access log SQL query into a working dataframe,
 as well as additional dataframes with dropped columns for anomaly detection
 '''
 
@@ -9,41 +9,104 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.stats as stats
 from acquire import get_access_data
+from IPython.display import display
 
 def full_wrangle():
     '''
-    This combines all the wrangling sub functions found below
+    This combines all the wrangling sub-functions found below and is called without an argument (pulls df from acquire)
+    {Returns :  df (fully cleaned dataframe);
+                df_staff (dataframe where accessing cohort == 'Staff);
+                df_multicohort (dataframe of accesses for those listed in more than one cohort);
+                df_unimputed (dataframe with accesses for those whose cohorts were not known nor could not easily be imputed);
+                df_non_curriculum (dataframe for accessess not related to the curriculum, i.e. directories, images);
+                df_outliers (dataframe of accesses with those users meeting outlier conditions)}
     '''
+
     df = get_access_data()
+    df_raw_cnt = df.shape[0]
+
     df = initial_drops(df)
+    df = add_and_set_columns(df)
     df = split_path(df)
+
     df, df_staff = remove_staff(df)
+    df_staff_cnt = df_staff.shape[0]
+
     df, df_multicohort, df_unimputed = impute_cohorts(df)
+    df_multicohort_cnt = df_multicohort.shape[0]
+    df_unimputed_cnt = df_unimputed.shape[0]
+
     df, df_non_curriculum = remove_non_curriculum(df)
+    df_non_curriculum_cnt = df_non_curriculum.shape[0]
+
     df, df_outliers = remove_outliers(df)
-    df = change_datatypes(df)
-    df = add_columns(df)
+    df_outliers_cnt = df_outliers.shape[0]
+
     df = null_filler(df)
+    df_final_cnt = df.shape[0]
+
+    ## To do - remake this into a dataframe
+    fcp = f'{100*(df_final_cnt/df_raw_cnt):.3}%'
+    dfs = f'{100*(df_staff_cnt/df_raw_cnt):.3}%'
+    dfm = f'{100*(df_multicohort_cnt/df_raw_cnt):.3}%'
+    dfu = f'{100*(df_unimputed_cnt/df_raw_cnt):.3}%'
+    dfn = f'{100*(df_non_curriculum_cnt/df_raw_cnt):.3}%'
+    dfo = f'{100*(df_outliers_cnt/df_raw_cnt):.3}%'
+
+    results = [{'Dataframe': 'df','Description':'Fully cleaned dataframe','Record Count':df_final_cnt,'Percent of Raw df':fcp},
+        {'Dataframe': 'df_staff','Description':'Cohort == Staff','Record Count':df_staff_cnt,'Percent of Raw df':dfs},
+        {'Dataframe': 'df_multicohort','Description':'Users listed in more than one cohort','Record Count':df_multicohort_cnt,'Percent of Raw df':dfm},
+        {'Dataframe': 'df_unimputed','Description':'Users with unknown/unimputable cohorts','Record Count':df_unimputed_cnt,'Percent of Raw df':dfu},
+        {'Dataframe': 'df_non_curriculum','Description':'Accessess not related to the curriculum, i.e. directories, images','Record Count':df_non_curriculum_cnt,'Percent of Raw df':dfn},
+        {'Dataframe': 'df_outliers','Description':'Accesses meeting outlier conditions','Record Count':df_outliers_cnt,'Percent of Raw df':dfo}]
+    
+    pd.set_option('display.max_colwidth',None)
+    print('This returned the following dataframes (reassign if you missed any):')
+    display(pd.DataFrame(results).set_index('Dataframe'))
+    
     return df, df_staff, df_multicohort, df_unimputed, df_non_curriculum, df_outliers
 
 def initial_drops(df):
     '''
     Drops a row with a bad value in it and drops all 4 rows with program_id = 4
-    [Returns df]
+    {Returns : df}
     '''
+
     # This index has a bad value for path
     df = df.drop(df.index[506305])
+
     # This program_id seemed to be in error
     df = df[df.program_id != 4]
+
+    return df
+
+def add_and_set_columns(df):
+    '''
+    Adds columns and sets dataytypes to ensure all dataframes are the same throughout the wrangle
+
+    '''
+
+    # Change the column 'name' to 'cohort
+    df = df.rename(columns={'name':'cohort'})
+
+    # Create program_type based on program_id
+    data_science = df[df.program_id == 3.0].cohort.unique()
+    df['program_type'] = np.where(df.cohort.isin(data_science) == True, 'Data Science', 'Web Development')
+
+     # Create DateTime for future index, convert dates to DateTime, add an hour column, drop old date and time
+    df['accessed'] = df['date'] + ' ' + df['time']
+    df.accessed = pd.to_datetime(df.accessed)
+    df['hour'] = df['accessed'].dt.hour
+    df = df.drop(columns=['date','time'])
+
     return df
 
 def split_path(df):
     '''
-    This splits the path into 'unit', 'subunit', 'lesson', and 'other.
-    The unit comes from the first element of the url path give
-    The lesson comes from the 2nd (if two elements only) or 3rd (if more than two elements) element of the url path
-    The rest is put into 'other'
-    [Returns df]
+    This splits the path into 'unit' and 'lesson': the latter is a combination of the first 1-3 elements in the path
+    The unit is the first element in the path.  If alone, it does not indicate a lesson has been selected.
+    The lesson comes from the 2nd (if two elements only) or 2nd and 3rd (if more than two elements) element of the url path
+    {Returns : df}
     '''
     # Creates a new dataframe to create the split data to merge into core df later
     splits = df.path.str.split('/', expand=True)
@@ -51,18 +114,9 @@ def split_path(df):
     splits['row_type'] = 8 - (splits.isnull().sum(axis=1))
     # Pulls out the academic unit, subunit and lesson
     splits['unit'] = splits[0]
-    splits['subunit'] = np.where(splits.row_type > 2, splits[1],splits[7])
-    splits['lesson'] = np.where(splits.row_type == 2, splits[1], splits[2])
-    # And finally, the rest of the path
-    splits['other'] = np.where(splits.row_type ==8,
-                            splits[3] + '/' + splits[4] + '/' + splits[5] + '/' + splits[6] + '/' + splits[7],
-                            np.where(splits.row_type == 7, 
-                                splits[3] + '/' + splits[4] + '/' + splits[5] + '/' + splits[6],
-                                np.where(splits.row_type == 6,
-                                            splits[3] + '/' + splits[4] + '/' + splits[5],
-                                            np.where(splits.row_type == 5,
-                                                    splits[3] + '/' + splits[4], splits[3]))))
-    splits = splits[['unit','subunit','lesson','other']]
+    splits['lesson'] = np.where(splits.row_type == 2, splits[0]+'.'+splits[1], np.where(splits.row_type == 3, splits[0]+'.'+splits[1]+'.'+splits[2], 'Not Lesson'))
+   
+    splits = splits[['unit','lesson']]
     df = df.merge(splits, left_index=True, right_index = True)
     return df
 
@@ -71,8 +125,13 @@ def remove_staff(df):
     Removes all entries with 'Staff' as cohort and puts them into seperate dataframe
     [Returns df and df_staff]
     '''
-    df_staff = df[df.name == 'Staff']
-    df = df[df.name != 'Staff']
+    ##Final dataframe layout
+    df = df[['accessed','path', 'ip', 'user_id', 'program_id', 'program_type', 'cohort', 'start_date', 'end_date','lesson','hour']]
+
+    df_staff = df[df.cohort == 'Staff']
+    df_staff.start_date = pd.to_datetime(df.start_date)
+    df_staff.end_date = pd.to_datetime(df.end_date)
+    df = df[df.cohort != 'Staff']
     return df, df_staff
 
 def impute_cohorts(df):
@@ -83,12 +142,12 @@ def impute_cohorts(df):
     and the second where the user's visit were partially recorded in a cohort, and partially as a Null
     '''
     # Create a dataframe of null nohorts
-    no_cohort = df[df['name'].isnull()  == True]
+    no_cohort = df[df['cohort'].isnull()  == True]
     no_cohort_list = no_cohort.user_id.unique()
     
     # Create a non-null dataframe (required for coming for loop)
     df_X = df.copy()
-    df_X['name'] = np.where(df_X.name.isnull() == True, 'X',df_X.name)
+    df_X['cohort'] = np.where(df_X.cohort.isnull() == True, 'X',df_X.cohort)
 
     # Will hold future dataframe object
     user_list = []
@@ -96,12 +155,12 @@ def impute_cohorts(df):
     #loop over each user without a cohort to find previous and next user cohorts
     for user in no_cohort_list:
         inlist = {}
-        inlist['prev_user_cohort'] = df_X[df_X.user_id == (user-1)].name.max()
+        inlist['prev_user_cohort'] = df_X[df_X.user_id == (user-1)].cohort.max()
         inlist['prev_user_program'] = df_X[df_X.user_id == (user-1)].program_id.max()
         inlist['user_id'] = user
-        inlist['next_user_cohort'] = df_X[df_X.user_id == (user+1)].name.max()
+        inlist['next_user_cohort'] = df_X[df_X.user_id == (user+1)].cohort.max()
         inlist['next_user_program'] = df_X[df_X.user_id == (user+1)].program_id.max()
-        inlist['total_accesses'] = df_X[df_X.user_id == user].date.count()
+        inlist['total_accesses'] = df_X[df_X.user_id == user].accessed.count()
         user_list.append(inlist)
     df_no_cohort_user = pd.DataFrame(user_list).set_index('user_id')
 
@@ -112,18 +171,18 @@ def impute_cohorts(df):
     suggested_imputes = suggested_imputes[['suggested_cohort','prev_user_program']].rename(columns = {'prev_user_program':'program'})
 
     # This creates a dataframe with cohort info
-    sd = pd.DataFrame(df.groupby('name').start_date.min())
-    ed = pd.DataFrame(df.groupby('name').end_date.max())
-    pid = pd.DataFrame(df.groupby('name').program_id.mean())
-    cohort_info = sd.merge(ed, on='name').merge(pid, on='name')
+    sd = pd.DataFrame(df.groupby('cohort').start_date.min())
+    ed = pd.DataFrame(df.groupby('cohort').end_date.max())
+    pid = pd.DataFrame(df.groupby('cohort').program_id.mean())
+    cohort_info = sd.merge(ed, on='cohort').merge(pid, on='cohort')
 
     # Brings cohort info together with the suggested imputes
-    suggested_imputes = suggested_imputes.merge(cohort_info, left_on='suggested_cohort', right_on='name').set_index(suggested_imputes.index)
+    suggested_imputes = suggested_imputes.merge(cohort_info, left_on='suggested_cohort', right_on='cohort').set_index(suggested_imputes.index)
     suggested_imputes = suggested_imputes.drop(columns = 'program')
 
     # Merges with main dataframe and replaces the values of imputed rows
     df = df.merge(suggested_imputes, how='left', on='user_id')
-    df['name'] = np.where(df.name.isnull()==True, df.suggested_cohort, df.name)
+    df['cohort'] = np.where(df.cohort.isnull()==True, df.suggested_cohort, df.cohort)
     df['start_date'] = np.where(df.start_date_x.isnull()==True, df.start_date_y, df.start_date_x)
     df['end_date'] = np.where(df.end_date_x.isnull()==True, df.end_date_y, df.end_date_x)
     df['program_id'] = np.where(df.program_id_x.isnull()==True, df.program_id_y, df.program_id_x)
@@ -133,22 +192,34 @@ def impute_cohorts(df):
 
     # Imputes the three users with one set of Null and one set of identified cohorts
         # For 358
-    df['name'] = np.where(df.user_id == 358, 'Bayes', df.name)
+    df['cohort'] = np.where(df.user_id == 358, 'Bayes', df.cohort)
     df['start_date'] = np.where(df.user_id == 358, '2019-08-19', df.start_date)
     df['end_date'] = np.where(df.user_id == 358, '2020-01-30', df.end_date)
     df['program_id'] = np.where(df.user_id == 358, '3', df.program_id)
 
         # For 375
-    df['name'] = np.where(df.user_id == 375, 'Andromeda', df.name)
+    df['cohort'] = np.where(df.user_id == 375, 'Andromeda', df.cohort)
     df['start_date'] = np.where(df.user_id == 375, '2019-03-18', df.start_date)
     df['end_date'] = np.where(df.user_id == 375, '2019-07-30', df.end_date)
     df['program_id'] = np.where(df.user_id == 375, '2', df.program_id)
 
         # For 644
-    df['name'] = np.where(df.user_id == 644, 'Ganymede', df.name)
-    df['start_date'] = np.where(df.user_id == 644, '2020-03-23', df.start_date)
-    df['end_date'] = np.where(df.user_id == 644, '2020-08-20', df.end_date)
+    df['cohort'] = np.where(df.user_id == 644, 'Ganymede', df.cohort)
+    df['start_date'] = np.where(df.user_id == 644, pd.to_datetime('2020-03-23'), df.start_date)
+    df['end_date'] = np.where(df.user_id == 644, pd.to_datetime('2020-08-20'), df.end_date)
     df['program_id'] = np.where(df.user_id == 644, '2', df.program_id)
+
+    # Re-Standardize value types
+    df.start_date = pd.to_datetime(df.start_date)
+    df.end_date = pd.to_datetime(df.end_date)
+    df = df.astype({'program_id':'float'})
+
+     # Ensure new program_type based on program_id
+    data_science = df[df.program_id == 3.0].cohort.unique()
+    df['program_type'] = np.where(df.cohort.isin(data_science) == True, 'Data Science', 'Web Development')
+
+    # Reorder columns to match previous dfs
+    df = df[['accessed','path', 'ip', 'user_id', 'program_id', 'program_type', 'cohort', 'start_date', 'end_date','lesson','hour']]
 
     # Creates multi-user dataframe
     multi_cohort_users = [25, 64, 88, 118, 120, 143, 268, 346, 419, 522, 663, 707, 752, 895]
@@ -159,9 +230,10 @@ def impute_cohorts(df):
     drop_index = drop_index.drop(multi_cohort_users)
     df = drop_index
     df = df.reset_index()
+    df = df[['accessed','path', 'ip', 'user_id', 'program_id', 'program_type', 'cohort', 'start_date', 'end_date','lesson','hour']]
 
     # Recalculate no cohort list
-    no_cohort = df[df['name'].isnull()  == True]
+    no_cohort = df[df['cohort'].isnull()  == True]
     no_cohort_list = no_cohort.user_id.unique()
 
     # Create dataframe for unimputed values
@@ -172,6 +244,8 @@ def impute_cohorts(df):
     drop_index = drop_index.drop(no_cohort_list)
     df = drop_index
     df = df.reset_index()
+
+    df = df[['accessed','path', 'ip', 'user_id', 'program_id', 'program_type', 'cohort', 'start_date', 'end_date','lesson','hour']]
 
     return df, df_multicohort, df_unimputed
 
@@ -204,17 +278,13 @@ def remove_outliers(df):
     '''
     We did this manually and are currently in-progress of refining
     '''
-    #create df to look at counts/use_id
-    df['access'] = df['date'] + ' ' + df['time']
-    df.access = pd.to_datetime(df.access)
-    new = df.groupby('user_id')['date', 'path', 'ip' ,'access'].nunique()
+    
+    new = df.groupby('user_id')['path', 'ip' ,'accessed'].nunique()
     #reset the index to obtain user_id column
     new = new.reset_index()
-    #drop the access date column created for above
-    df = df.drop(columns = 'access')
+    
     #IQR df w/minimums bc of negatives
-    temp_df = new.loc[(new['date'] < 5) | (new['date'] > 238 )]
-    temp_df = new.loc[(new['access'] < 50) | (new['access'] > 2669)] #access = date + time
+    temp_df = new.loc[(new['accessed'] < 50) | (new['accessed'] > 2669)] #access = date + time
     temp_df = new.loc[(new['path'] < 10) | (new['path'] > 331)]
     temp_df = new.loc[(new['ip'] < 2) | (new['ip'] > 17)]
     
@@ -226,34 +296,6 @@ def remove_outliers(df):
     df = df[df.user_id.isin(outliers) == False]
     
     return df, df_outliers
-
-
-def change_datatypes(df):
-    '''
-    Changes program id to integer and passes df through pd.to_datetime for date and time format/dtype for all date/time columns;
-    and combining date + time and setting as index
-    '''
-    # Program_id string to integer
-    df = df.astype({'program_id':'float'})
-    df = df.astype({'program_id':'int8'})
-
-    # Create DateTime for index, convert dates to DateTime, add an hour column, drop old date and time
-    df['accessed'] = df['date'] + ' ' + df['time']
-    df.accessed = pd.to_datetime(df.accessed)
-    df.start_date = pd.to_datetime(df.start_date)
-    df.end_date = pd.to_datetime(df.end_date)
-    df['hour'] = df['accessed'].dt.hour
-    df = df.drop(columns=['date','time'])
-    df = df[df.end_date <= pd.to_datetime("today")]
-    #setting date as the index
-    df = df.set_index('accessed')
-    return df
-
-def add_columns(df):
-    '''
-    '''
-    df['program_type'] = np.where(df.program_id == 3, 'Data Science', 'Web Development')
-    return df
 
 def null_filler(df):
     '''
