@@ -2,10 +2,10 @@
 
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
 
-### Project Summary
+### Project Summary / Background
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
 
-Scenario: We are serving as Data Analysts for the CodeUp staff. We have been tasked by a staff member to answer several questions they need to speak on at an upcoming board meeting.
+We are serving as Data Analysts for the CodeUp staff. We have been tasked by a staff member to answer several questions they need to speak on at an upcoming board meeting.
 
 We will be using Anomaly Detection methodoligies to answer the questions. The data source is from the curriculum_logs MySql CodeUp database.
 
@@ -27,9 +27,9 @@ We will be using Anomaly Detection methodoligies to answer the questions. The da
 > - A final report notebook 
 > - All necessary modules to make project reproducible
 > - An email before the due date which includes:
-    > - answering all questions
-    > - a link to final notebook
-    > - a summary google slide
+    - answering all questions
+    - a link to final notebook
+    - a summary google slide
 > - 
 
 #### Data Dictionary
