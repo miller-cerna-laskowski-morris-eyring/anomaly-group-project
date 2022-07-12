@@ -5,7 +5,9 @@
 ### Project Summary
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
 
-Scenario: We are serving as Data Analyst for CodeUp staff. We have been tasked by a Staff Member to answer 
+Scenario: We are serving as Data Analysts for the CodeUp staff. We have been tasked by a staff member to answer several questions they need to speak on at an upcoming board meeting.
+
+We will be using Anomaly Detection methodoligies to answer the questions. The data source is from the curriculum_logs MySql CodeUp database.
 
 #### Project Objectives
 > - Obj 1 
