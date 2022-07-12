@@ -10,22 +10,27 @@ Scenario: We are serving as Data Analysts for the CodeUp staff. We have been tas
 We will be using Anomaly Detection methodoligies to answer the questions. The data source is from the curriculum_logs MySql CodeUp database.
 
 #### Project Objectives
-> - Obj 1 
+> - Answer all questions.
 > - Obj 2 (if necess)
 > - Obj 3 (if necess)
 
 #### Goals
-> - Goal 1 (if necess)
-> - Goal 2 (if necess)
-> - Document my process well enough to be presented or read like a report.
+> - Answer questions for CodeUp staff by analyzing data from curriculum_logs.
+> - Prepare a single slide that summarizes most important points which will be incorporated into an existing presentation.
+> - Document process well enough to be presented or read like a report.
 
 #### Audience
 > - CodeUp Board Members
 > - CodeUp Students!
 
 #### Project Deliverables
-> - A final report notebook (exoplanet_study_notebook.ipynb)
-> - All necessary modules to make my project reproducible
+> - A final report notebook 
+> - All necessary modules to make project reproducible
+> - An email before the due date which includes:
+    > - answering all questions
+    > - a link to final notebook
+    > - a summary google slide
+> - 
 
 #### Data Dictionary
 - Note: Includes only those features selected for full EDA and Modeling:
