@@ -88,7 +88,7 @@ def add_and_set_columns(df):
     df = df.rename(columns={'name':'cohort'})
 
     # Create program_type based on program_id
-    df['program_type'] = np.where(df.program_id == 3, 'Data Science', 'Web Development')
+    df['program_type'] = np.where(df.program_id < 2.5, 'Web Development', 'Data Science')
 
      # Create DateTime for future index, convert dates to DateTime, add an hour column, drop old date and time
     df['accessed'] = df['date'] + ' ' + df['time']
