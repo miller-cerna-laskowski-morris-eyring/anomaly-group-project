@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.stats as stats
 from acquire import get_access_data
+from IPython.display import display
 
 def full_wrangle():
     '''
@@ -53,14 +54,15 @@ def full_wrangle():
     dfo = f'{100*(df_outliers_cnt/df_raw_cnt):.3}%'
 
     results = [{'Dataframe': 'df','Description':'Fully cleaned dataframe','Record Count':df_final_cnt,'Percent of Raw df':fcp},
-        {'Dataframe': 'df_staff','Description':'Dataframe where accessing cohort == Staff','Record Count':df_staff_cnt,'Percent of Raw df':dfs},
-        {'Dataframe': 'df_multicohort','Description':'Dataframe of accesses for users listed in more than one cohort','Record Count':df_multicohort_cnt,'Percent of Raw df':dfm},
-        {'Dataframe': 'df_unimputed','Description':'Dataframe with accesses for those users whose cohorts were not known nor could not easily be imputed','Record Count':df_unimputed_cnt,'Percent of Raw df':dfu},
-        {'Dataframe': 'df_non_curriculum','Description':'Dataframe for accessess not related to the curriculum, i.e. directories, images','Record Count':df_non_curriculum_cnt,'Percent of Raw df':dfn},
-        {'Dataframe': 'df_outliers','Description':'Dataframe of accesses for those users meeting outlier conditions','Record Count':df_outliers_cnt,'Percent of Raw df':dfo}]
+        {'Dataframe': 'df_staff','Description':'Cohort == Staff','Record Count':df_staff_cnt,'Percent of Raw df':dfs},
+        {'Dataframe': 'df_multicohort','Description':'Users listed in more than one cohort','Record Count':df_multicohort_cnt,'Percent of Raw df':dfm},
+        {'Dataframe': 'df_unimputed','Description':'Users with unknown/unimputable cohorts','Record Count':df_unimputed_cnt,'Percent of Raw df':dfu},
+        {'Dataframe': 'df_non_curriculum','Description':'Accessess not related to the curriculum, i.e. directories, images','Record Count':df_non_curriculum_cnt,'Percent of Raw df':dfn},
+        {'Dataframe': 'df_outliers','Description':'Accesses meeting outlier conditions','Record Count':df_outliers_cnt,'Percent of Raw df':dfo}]
     
+    pd.set_option('display.max_colwidth',None)
     print('This returned the following dataframes (reassign if you missed any):')
-    print(pd.DataFrame(results).set_index('Dataframe'))
+    display(pd.DataFrame(results).set_index('Dataframe'))
     
     return df, df_staff, df_multicohort, df_unimputed, df_non_curriculum, df_outliers
 
@@ -88,7 +90,8 @@ def add_and_set_columns(df):
     df = df.rename(columns={'name':'cohort'})
 
     # Create program_type based on program_id
-    df['program_type'] = np.where(df.program_id < 2.5, 'Web Development', 'Data Science')
+    data_science = df[df.program_id == 3.0].cohort.unique()
+    df['program_type'] = np.where(df.cohort.isin(data_science) == True, 'Data Science', 'Web Development')
 
      # Create DateTime for future index, convert dates to DateTime, add an hour column, drop old date and time
     df['accessed'] = df['date'] + ' ' + df['time']
@@ -210,6 +213,10 @@ def impute_cohorts(df):
     df.start_date = pd.to_datetime(df.start_date)
     df.end_date = pd.to_datetime(df.end_date)
     df = df.astype({'program_id':'float'})
+
+     # Ensure new program_type based on program_id
+    data_science = df[df.program_id == 3.0].cohort.unique()
+    df['program_type'] = np.where(df.cohort.isin(data_science) == True, 'Data Science', 'Web Development')
 
     # Reorder columns to match previous dfs
     df = df[['accessed','path', 'ip', 'user_id', 'program_id', 'program_type', 'cohort', 'start_date', 'end_date','lesson','hour']]
