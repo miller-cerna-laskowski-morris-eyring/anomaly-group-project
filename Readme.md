@@ -24,12 +24,12 @@ We will be using Anomaly Detection methodoligies to answer the questions. The da
 > - CodeUp Students!
 
 #### Project Deliverables
-- A final report notebook 
-- All necessary modules to make project reproducible
-- An email before the due date which includes:
-    - answering all questions
-    - a link to final notebook
-    - a summary google slide
+> - A final report notebook 
+> - All necessary modules to make project reproducible
+> - An email before the due date which includes:
+>    - answering all questions
+>    - a link to final notebook
+>    - a summary google slide
 - 
 
 #### Data Dictionary
