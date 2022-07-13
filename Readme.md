@@ -105,12 +105,12 @@ ___
 ___
 
 ##### Plan -> Acquire -> Prepare/Wrange
-> - Store functions needed to wrangle the data; make sure the module contains the necessary imports to run the code. The final functions (wrangle.py) should do the following:
-    - Since there is no modeling to be done for this project, there is no need to split the data into train/validate/test.
-    - Handle any missing values.
-    - Handle erroneous data and/or outliers that need addressing.
-    - Encode variables as needed.
-    - Create any new features, if made for this project.
+> - Store functions needed to wrangle the data; make sure the module contains the necessary imports to run the code. The final functions (wrangle.py) should do the following:<br>
+    - Since there is no modeling to be done for this project, there is no need to split the data into train/validate/test. <br>
+    - Handle any missing values.<br>
+    - Handle erroneous data and/or outliers that need addressing.<br>
+    - Encode variables as needed.<br>
+    - Create any new features, if made for this project.<br>
 > - In particular, since anomaly detection is a focus of this project, we keep all removed data for later analysis
 > - Import the prepare functions from the wrangle.py module and use it to prepare the data in the final notebook.
 ___
