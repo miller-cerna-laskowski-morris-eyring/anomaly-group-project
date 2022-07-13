@@ -78,10 +78,10 @@ Notes:
 ### Executive Summary - Conclusions & Next Steps
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
 
-> - Question: 
-> - Actions: 
-> - Conclusions:  
-> - Recommendations: 
+> - Question: How are users interacting with our curriculum's platform?
+> - Actions: Our team pulled multiple years of access data, including data we later discovered was from a previous iteration of the course content structure.  We looked for both actionable user statistics (such as what users accessed the most, how that changed between cohort, program and alumni status) as well as any anomalys that may indicate scraping or nefarious action.  Thus, while doing this analysis, we kept in mind its aims of improving content selection and delivery as well as for corporate and information security pruposes.
+> - Conclusions: Across cohorts, Data Science students access Classification and the Foundational Intro lesson the most, while Web Developers (ironically) access a mysql lesson (tables) the most.  This changes after graduation, where Data Scientists freshen up on their SQL, and Web Developers access Spring-related lessons most often.   Alumni make up around 20% of all access counts.  Lastly, there is some likely non-user/machine access of our system, however it does not appear to hae been anthing particular serious or damaging. 
+> - Recommendations: In order to improve future analysis on this data, we recommend (1) conducting a detailed imputation/check of all user's cohort information; (2) Create a column that consolidates different names of the same/similar content; (3) Create a data sctructure that holds details about specific lessons, in particular date of last content change.
 
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
 
@@ -105,12 +105,12 @@ ___
 ___
 
 ##### Plan -> Acquire -> Prepare/Wrange
-> - Store functions needed to wrangle the data; make sure the module contains the necessary imports to run the code. The final functions (wrangle.py) should do the following:<br>
-    - Since there is no modeling to be done for this project, there is no need to split the data into train/validate/test. <br>
-    - Handle any missing values.<br>
-    - Handle erroneous data and/or outliers that need addressing.<br>
-    - Encode variables as needed.<br>
-    - Create any new features, if made for this project.<br>
+> - Store functions needed to wrangle the data; make sure the module contains the necessary imports to run the code. The final functions (wrangle.py) should do the following:
+    - Since there is no modeling to be done for this project, there is no need to split the data into train/validate/test.
+    - Handle any missing values.
+    - Handle erroneous data and/or outliers that need addressing.
+    - Encode variables as needed.
+    - Create any new features, if made for this project.
 > - In particular, since anomaly detection is a focus of this project, we keep all removed data for later analysis
 > - Import the prepare functions from the wrangle.py module and use it to prepare the data in the final notebook.
 ___
