@@ -9,14 +9,25 @@ import seaborn as sns
 import math
 
 # --------------------------------------------------
-# Top Lesson and Unit Analysis Functions (Q1)
+# Top Lesson and Unit Analysis Functions
 # --------------------------------------------------
 
 def lesson_top_three(df):
+    '''
+    Emits a dataframe that shows the top three lessons per program, along with counts
+    '''
+
+    # Prints out the top ten lessons for entire program
     print(f'Top ten lessons:\n----------\n{df.lesson.value_counts().nlargest(10)}')
+    
+    # Creates a groupby dataframe to pull from
     df_grouped = df.groupby('cohort').lesson.value_counts()
+    
+    # Initialize a list for a df, initialize a counter to limit loops to top three results
     top_three = []
     counter = 0
+
+    # Initializes the start point and first dict needed for loop
     name = df_grouped.index[0][0]
     result_row = {}
     for c in df_grouped.index:
@@ -37,11 +48,24 @@ def lesson_top_three(df):
     return pd.DataFrame(top_three).dropna().reset_index().drop(columns='index')
 
 def unit_top_three(df):
+    '''
+    Emits a dataframe that shows the top three Units per program, along with counts
+    '''
+
+    # Creates the Unit feature by spliting, delimiting on the '/'
     df['unit'] = df.path.str.split('/', expand=True)[0]
+
+    # Prints out the top ten lessons for entire program
     print(f'Top ten units:\n----------\n{df.unit.value_counts().nlargest(10)}')
+
+    # Creates a groupby dataframe to pull from
     df_grouped = df.groupby('cohort').unit.value_counts()
+    
+    # Initialize a list for a df, initialize a counter to limit loops to top three results
     top_three = []
     counter = 0
+    
+    # Initializes the start point and first dict needed for loop
     name = df_grouped.index[0][0]
     result_row = {}
     for c in df_grouped.index:
@@ -65,6 +89,10 @@ def unit_top_three(df):
 # --------------------------------------------------
 
 def common_lesson_minimum_access():
+    '''
+    Compares unique lessons for each cohort to determine lessons common to all, then assesses the lowest
+    '''
+    
     # Create a list of DS cohorts
     ds_cohorts = ds.groupby('cohort').lesson.nunique().index
 
@@ -92,12 +120,15 @@ def wd_ds_groups(df):
     This function splits webdev and ds students into two groups and then assigns users activity in each group
     as either active students or inactive students within their cohort dates
     '''
+
     #splitting webdev and datascience into two different df:
     wd = df[df.program_type != 'Data Science']
     ds = df[df.program_type == 'Data Science']
+
     # Filter dataframe for the time when student were 'active' for each program
     active_wd = wd.loc[(wd.accessed >= wd.start_date) & (wd.accessed <= wd.end_date)]
     active_ds = ds.loc[(ds.accessed >= ds.start_date) & (ds.accessed <= ds.end_date)]
+
     #prints number of active wb students compared to ds students:
     print(f'Number of active WebDev students during their cohort dates:', active_wd.value_counts().sum())
     print(f'Number of active DataScience students during their cohort dates:', active_ds.value_counts().sum())
@@ -106,11 +137,13 @@ def wd_lowest_access_counts(df):
     '''
     This function pulls the lowest access counts from WebDev students
     '''
+
     # Filter dataframe for the time when student were 'active' for each program
     wd = df[df.program_type != 'Data Science']
     ds = df[df.program_type == 'Data Science']
     active_wd = wd.loc[(wd.accessed >= wd.start_date) & (wd.accessed <= wd.end_date)]
     active_ds = ds.loc[(ds.accessed >= ds.start_date) & (ds.accessed <= ds.end_date)]
+
     #sorting wd students into group of 20 lowest accessed counts:
     hardly_access_wd = active_wd.groupby('user_id').size().sort_values().head(20)
 
@@ -120,10 +153,12 @@ def wd_lowest_barplot(df):
     '''
     This function plots the lowest access counts from WebDev students as a barplot
     '''
+
     # Runs df through wd_lowest_access_counts to set up data for visual:
     wd = df[df.program_type != 'Data Science']
     active_wd = wd.loc[(wd.accessed >= wd.start_date) & (wd.accessed <= wd.end_date)]
     hardly_access_wd = active_wd.groupby('user_id').size().sort_values().head(20)
+
     #histogram of these users under 20 logged access dates:
     user_id_count = active_wd.groupby('user_id').size().sort_values()
     user_id_count = user_id_count[:20]
@@ -138,9 +173,11 @@ def ds_lowest_access_counts(df):
     '''
     This function pulls the lowest access counts from DS students
     '''
+
     # Filter dataframe for the time when student were 'active' for each program
     ds = df[df.program_type == 'Data Science']
     active_ds = ds.loc[(ds.accessed >= ds.start_date) & (ds.accessed <= ds.end_date)]
+
     #sorting wd students into group of 20 lowest accessed counts:
     hardly_access_ds = active_ds.groupby('user_id').size().sort_values().head(20)
     
@@ -150,10 +187,12 @@ def ds_lowest_barplot(df):
     '''
     This function plots the lowest access counts from DS students as a barplot
     '''
+
     # Runs df through ds_lowest_access_counts to set up data for visual:
     ds = df[df.program_type == 'Data Science']
     active_ds = ds.loc[(ds.accessed >= ds.start_date) & (ds.accessed <= ds.end_date)]
     hardly_access_ds = active_ds.groupby('user_id').size().sort_values().head(20)
+
     #histogram of these users under 20 logged access dates:
     user_id_count1 = active_ds.groupby('user_id').size().sort_values()
     user_id_count1 = user_id_count1[:20]
@@ -169,12 +208,15 @@ def user_stacked_plot(columns_to_plot, title, df):
     Returns a 100% stacked plot of the response variable for independent variable of the list columns_to_plot.
     Parameters: columns_to_plot (list of string): Names of the variables to plot
     '''
+    
     df['is_active'] = (df.accessed >= df.start_date) & (df.accessed <= df.end_date)
     number_of_columns = 2
     number_of_rows = math.ceil(len(columns_to_plot)/2)
+
     # create a figure
     fig = plt.figure(figsize=(12, 5 * number_of_rows))
     fig.suptitle(title, fontsize=22,  y=.95)
+
     # loop to each column name to create a subplot
     for index, column in enumerate(columns_to_plot, 1):
         # create the subplot
