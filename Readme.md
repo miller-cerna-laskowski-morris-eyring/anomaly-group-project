@@ -5,7 +5,7 @@
 ### Project Summary / Scenario
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
 
-We are serving as Data Analysts for the CodeUp staff. We have been tasked by a staff member to answer several questions in an email they need to speak on at an upcoming board meeting. We will be using Anomaly Detection methodoligies to answer the questions. The data source is from the curriculum_logs MySql CodeUp database.
+We are serving as Data Analysts for the CodeUp staff. We have been tasked to answer several questions leadership will speak on at an upcoming board meeting. In addition to the questions found below, we used Anomaly Detection methodologies to answer the questions. The data source is from the curriculum_logs MySql CodeUp database.
 
 Email:
 
@@ -20,18 +20,15 @@ Email:
 7. *Which lessons are least accessed?*
 8. *Anything else I should be aware of?*
 
-
-*Thank you,"*
-
 #### Project Objectives
 > - Answer all questions.
-> - Obj 2 (if necess)
-> - Obj 3 (if necess)
+> - Communicate additional insights discovered through the core data anlaysis.
+> - Identify anomalies that could negatively impact the business.
 
 #### Goals
 > - Answer questions for CodeUp staff by analyzing data from curriculum_logs.
 > - Prepare a single slide that summarizes most important points which will be incorporated into an existing presentation.
-> - Document process well enough to be presented or read like a report.
+> - Document process well enough in a Jupyter notebook that it can be duplicated by another team, or presented/read like a report.
 
 #### Audience
 > - CodeUp Board Members
@@ -45,27 +42,36 @@ Email:
 >    - a link to final notebook
 >    - an executive summary google slide in form to present
 
-
 #### Data Dictionary
-- Note: Includes only those features selected for full EDA and Modeling:
-
-|Target|Datatype|Definition|
-|:-------|:--------|:----------|
-| ? | 2820 non-null: object | Earthlike or Not-Earthlike gravity measurement, based on planet's radius |
+Notes
+- 1) We split the data into multiple dataframes, each keeping records cleaned in the previous step for anomaly analysis
+- 2) Includes only those features selected for full exploration, and counts are for the primary analysis dataframe
+- 2) Multiple targets were examined, primarily user_id and lesson, so all variables listed as features
 
 |Feature|Datatype|Definition|
 |:-------|:--------|:----------|
-| ?      | 2820 non-null: int64 | number of planets in system |
-
-
+| accessed | 509409 non-null: datetime64 | Datetime stamp of when the record was created (access occured) |
+| path | 509409 non-null: object | url path of what content was accessed |
+| ip | 509409 non-null: object | ip address of user who accessed content |
+| user_id | 509409 non-null: int64 | Unique (assumed) user id for user who accessed content|
+| program_id | 509409 non-null: float64 | Program id (Web Dev 1 = 1, Web Dev 2 = 2, DS = 3; 4 was removed) |
+| program_type | 509409 non-null: object | Derived from program_id (Web Development or Data Science) |
+| cohort | 509409 non-null: object | What cohort(s) user_id is in; known or imputed in analysis df |
+| start_date | 509409 non-null: datetime64 | Start date of given cohort |
+| end_date | 509409 non-null: datetime64 | End date of give cohort |
+| lesson | 509409 non-null: object | The endpoint of access, if a lesson, derived from 'path' |
+| hour | 509409 non-null: int64 | The hour of access (24-hour clock), derived from 'accessed' |
 
 #### Initial Hypotheses
 
 > - **Hypothesis 1 -**
-> - H1
+> - Web Development accesss data will be noisier/require more prep than Data Science access data due to major changes that took place over the course period (including adding Data Science)
 
 > - **Hypothesis 2 -** 
-> - H2 (additional if needed)
+> - In addition to students and staff, other entities are accessing our data (such as web scrapers or competitors trying to steal content)
+
+> - **Hypothesis 1 -**
+> - A large proportion of students continue to access key lessons after graduation
 
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
 
@@ -93,7 +99,7 @@ ___
 ##### Plan -> Acquire
 > - Store functions that are needed to acquire data from the database server; make sure the acquire.py module contains the necessary imports for anyone with database access to run the code.
 > - The final function will return a pandas DataFrame.
-> - Import the acquire function from the acquire.py module and use it to acquire the data in the final notebook.
+> - Import the acquire function from the acquire.py module and use it to acquire the data.
 > - Complete some initial data summarization (`.info()`, `.describe()`, `.value_counts()`, etc.).
 > - Plot distributions of individual variables.
 ___
@@ -105,6 +111,7 @@ ___
     - Handle erroneous data and/or outliers that need addressing.
     - Encode variables as needed.
     - Create any new features, if made for this project.
+> - In particular, since anomaly detection is a focus of this project, we keep all removed data for later analysis
 > - Import the prepare functions from the wrangle.py module and use it to prepare the data in the final notebook.
 ___
 
@@ -122,6 +129,7 @@ ___
 > - Summarize findings at the beginning like we would for an Executive Summary.
 > - Walk team through the analysis we did to answer questions which lead to findings. (Visualize relationships and Document takeaways.) 
 > - Clearly call out the questions and answers we are analyzing as well as offer insights and recommendations based on findings.
+> - Summarize these findings in a brief email to stakeholder requesting them, as well as single summary slide for use in a larger presentation
 
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
 
@@ -132,8 +140,9 @@ ___
 You will need all the necessary files listed below to run my final project notebook. 
 - [x] Read this README.md
 - [ ] Access to CodeUp MySql server
-- [ ] Download [[wrangle functions]]
-- [ ] Scrap notebooks
+- [ ] Have loaded all common DS libraries
+- [ ] Download all helper function files [acquire.py, wrangle.py, explore.py]
+- [ ] Scrap notebooks (if desired, to dive deeper)
 - [ ] Run the final report
 
 ##### Credit to Faith Kane (https://github.com/faithkane3) for the format of this README.md file.
