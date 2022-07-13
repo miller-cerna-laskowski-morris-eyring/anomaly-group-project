@@ -43,10 +43,10 @@ Email:
 >    - an executive summary google slide in form to present
 
 #### Data Dictionary
-Notes
-- 1) We split the data into multiple dataframes, each keeping records cleaned in the previous step for anomaly analysis
-- 2) Includes only those features selected for full exploration, and counts are for the primary analysis dataframe
-- 2) Multiple targets were examined, primarily user_id and lesson, so all variables listed as features
+Notes:
+- We split the data into multiple dataframes, each keeping records cleaned in the previous step for anomaly analysis
+- Includes only those features selected for full exploration, and counts are for the primary analysis dataframe
+- Multiple targets were examined, primarily user_id and lesson, so all variables listed as features
 
 |Feature|Datatype|Definition|
 |:-------|:--------|:----------|
@@ -70,7 +70,7 @@ Notes
 > - **Hypothesis 2 -** 
 > - In addition to students and staff, other entities are accessing our data (such as web scrapers or competitors trying to steal content)
 
-> - **Hypothesis 1 -**
+> - **Hypothesis 3 -**
 > - A large proportion of students continue to access key lessons after graduation
 
 <hr style="border-top: 10px groove blueviolet; margin-top: 1px; margin-bottom: 1px"></hr>
