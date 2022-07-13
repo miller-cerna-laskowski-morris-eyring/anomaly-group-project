@@ -88,7 +88,7 @@ def unit_top_three(df):
 # Bottom Lessons
 # --------------------------------------------------
 
-def common_lesson_minimum_access():
+def common_lesson_minimum_access(ds, df):
     '''
     Compares unique lessons for each cohort to determine lessons common to all, then assesses the lowest
     '''
@@ -109,11 +109,51 @@ def common_lesson_minimum_access():
         row['Lesson'] = n
         row['Count'] = df[df.lesson == n].accessed.count()
         qw.append(row)
-    return pd.DataFrame(qw).set_index('Lesson').count.nsmallest(10)
+    qw = pd.DataFrame(qw).set_index('Lesson').Count
+    qw = qw[qw > 25].nsmallest(10)
+
+    return qw
 
 # --------------------------------------------------
 # Alumni access and plots
 # --------------------------------------------------
+
+def cross_curriculum_access(df, df_outliers):
+    # join df and outliers as one dataframe
+    joint = pd.concat([df, df_outliers])
+
+    # removed user 782 since they are incorrectly identified as a DS student
+    joint = joint[joint.user_id != 782]
+
+    # create web development and datas science dataframes
+    wd_df = joint[joint.program_type=='Web Development']
+    ds_df = joint[joint.program_type=='Data Science']
+
+    # determine what a data science course is using science
+    wd_to_ds_access_df = wd_df[wd_df.path.str.contains('science')]
+    wd_to_ds_access_df = wd_to_ds_access_df.set_index(wd_to_ds_access_df.accessed)
+
+    # view daily cross-acess in web development to data science
+    daily_wd_to_ds_access_df = wd_to_ds_access_df.resample('D').count()
+
+    # create data for wd students viewing ds curriculum after 2019
+    after_2019 = wd_to_ds_access_df['2019-12-31':]
+
+    # determine what a web development course is using java
+    ds_to_wd_access_df=ds_df[ds_df.path.str.contains('java')]
+
+    # set index to datetime for resampling
+    ds_to_wd_access_df=ds_to_wd_access_df.set_index(ds_to_wd_access_df.accessed)
+
+    # create data for wd students viewing ds curriculum after 2019
+    ds_after_2019 = ds_to_wd_access_df['2019-12-31':]
+
+    # resample data to daily view
+    daily_ds_to_wd_access_df=ds_to_wd_access_df.resample('D').count()
+
+    return daily_wd_to_ds_access_df, daily_ds_to_wd_access_df, after_2019, ds_after_2019, wd_to_ds_access_df, ds_to_wd_access_df
+
+
 
 def wd_ds_groups(df):
     '''
@@ -208,7 +248,7 @@ def user_stacked_plot(columns_to_plot, title, df):
     Returns a 100% stacked plot of the response variable for independent variable of the list columns_to_plot.
     Parameters: columns_to_plot (list of string): Names of the variables to plot
     '''
-    
+
     df['is_active'] = (df.accessed >= df.start_date) & (df.accessed <= df.end_date)
     number_of_columns = 2
     number_of_rows = math.ceil(len(columns_to_plot)/2)
