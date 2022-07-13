@@ -169,6 +169,7 @@ def user_stacked_plot(columns_to_plot, title, df):
     Returns a 100% stacked plot of the response variable for independent variable of the list columns_to_plot.
     Parameters: columns_to_plot (list of string): Names of the variables to plot
     '''
+    df['is_active'] = (df.accessed >= df.start_date) & (df.accessed <= df.end_date)
     number_of_columns = 2
     number_of_rows = math.ceil(len(columns_to_plot)/2)
     # create a figure
